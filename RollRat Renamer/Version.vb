@@ -11,7 +11,7 @@ Public Class Version
     '
     '   실제버전
     '
-    Public Const VersionText As String = "0."
+    Public Const VersionText As String = "0.3"
 
     Public Const ProgramName As String = "RollRat Renamer"
 
