@@ -160,12 +160,10 @@ Public Class frmMain
 #Region "ListView Column Sorting"
 
     Private Sub InitListViewColumn()
-        Dim columnsTrans As New List(Of ColHeader)
-        For Each column As ColumnHeader In lvFileList.Columns
-            columnsTrans.Add(New ColHeader(column.Text, column.Width, column.TextAlign, True))
-        Next
-        lvFileList.Columns.Clear()
-        lvFileList.Columns.AddRange(columnsTrans.ToArray)
+        lvFileList.Columns.Add(New ColHeader("파일 이름", 180, HorizontalAlignment.Left, True))
+        lvFileList.Columns.Add(New ColHeader("크기", 85, HorizontalAlignment.Right, True))
+        lvFileList.Columns.Add(New ColHeader("유형", 55, HorizontalAlignment.Left, True))
+        lvFileList.Columns.Add(New ColHeader("수정된 날짜", 170, HorizontalAlignment.Left, True))
     End Sub
 
     Declare Unicode Function StrCmpLogicalW Lib "shlwapi.dll" (ByVal s1 As String, ByVal s2 As String) As Integer

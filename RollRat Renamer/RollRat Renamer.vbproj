@@ -141,9 +141,14 @@
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
     <None Include="App.config" />
+    <None Include="README.MD" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="copyright.PNG" />
+    <Content Include="main.png" />
+    <Content Include="preview.png" />
     <Content Include="TETO.ico" />
+    <Content Include="undo.PNG" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
