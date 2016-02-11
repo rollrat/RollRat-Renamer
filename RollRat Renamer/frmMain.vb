@@ -823,6 +823,37 @@ Public Class frmMain
 
 #End Region
 
+#Region "Find Overlap"
+
+    Private Sub FindOverlapInternal(inverse As Boolean)
+        Dim first As Boolean = inverse
+        Dim second As Boolean = Not inverse
+
+        Dim tagt_items As New List(Of String)
+        Dim overlap_int As New List(Of Integer)
+
+        For index As Integer = 0 To lbTargetList.Items.Count - 1
+            tagt_items.Add(CStr(lbTargetList.Items(index)))
+        Next
+
+        tbOverlap.Text = FindOverlap(tagt_items, overlap_int, clbPatternElement.Items)
+
+        For i As Integer = 0 To clbPatternElement.Items.Count - 1
+            clbPatternElement.SetItemChecked(i, first)
+        Next
+        For Each i As Integer In overlap_int
+            clbPatternElement.SetItemChecked(i, second)
+        Next
+    End Sub
+    Private Sub bFindOverlap_Click(sender As Object, e As EventArgs) Handles bFindOverlap.Click
+        FindOverlapInternal(False)
+    End Sub
+    Private Sub bFindInvOverlap_Click(sender As Object, e As EventArgs) Handles bFindInvOverlap.Click
+        FindOverlapInternal(True)
+    End Sub
+
+#End Region
+
     Private Sub lvFileList_SelectedIndexChanged(sender As Object, e As EventArgs) Handles lvFileList.SelectedIndexChanged
         Dim sii As String
         For i As Integer = 0 To lvFileList.SelectedItems.Count - 1
@@ -874,49 +905,6 @@ Public Class frmMain
             val = clbPatternElement.CheckedItems.Count - 1
         End If
         lbChose.Text = val
-    End Sub
-
-    Private Sub bFindOverlap_Click(sender As Object, e As EventArgs) Handles bFindOverlap.Click
-        Dim tagt_items As New List(Of String)
-        Dim overlap_int As New List(Of Integer)
-
-        For index As Integer = 0 To lbTargetList.Items.Count - 1
-            tagt_items.Add(CStr(lbTargetList.Items(index)))
-        Next
-
-        tbOverlap.Text = FindOverlap(tagt_items, overlap_int, clbPatternElement.Items)
-
-        For i As Integer = 0 To clbPatternElement.Items.Count - 1
-            clbPatternElement.SetItemChecked(i, False)
-        Next
-        For Each i As Integer In overlap_int
-            clbPatternElement.SetItemChecked(i, True)
-        Next
-    End Sub
-
-    Private Sub bFindInvOverlap_Click(sender As Object, e As EventArgs) Handles bFindInvOverlap.Click
-        Dim tagt_items As New List(Of String)
-        Dim overlap_int As New List(Of Integer)
-        Dim disoverlap_int As New List(Of Integer)
-
-        For index As Integer = 0 To lbTargetList.Items.Count - 1
-            tagt_items.Add(CStr(lbTargetList.Items(index)))
-        Next
-
-        tbOverlap.Text = FindOverlap(tagt_items, overlap_int, clbPatternElement.Items)
-
-        For i As Integer = 0 To clbPatternElement.Items.Count - 1
-            If Not overlap_int.Contains(i) Then
-                disoverlap_int.Add(i)
-            End If
-        Next
-
-        For i As Integer = 0 To clbPatternElement.Items.Count - 1
-            clbPatternElement.SetItemChecked(i, False)
-        Next
-        For Each i As Integer In disoverlap_int
-            clbPatternElement.SetItemChecked(i, True)
-        Next
     End Sub
 
     Private Sub rtbReplace_TextChanged(sender As Object, e As EventArgs) Handles rtbReplace.TextChanged
@@ -1093,7 +1081,7 @@ Public Class frmMain
             End If
 
             If MsgBox("다음 원래(왼쪽)이름들이 오른쪽과 같이 바뀌는 것에 동의하십니까?" & vbCrLf & vbCrLf & message_bottom,
-                      MsgBoxStyle.Exclamation Or MsgBoxStyle.YesNo, "RollRat Rename") = MsgBoxResult.Yes Then
+                      MsgBoxStyle.Exclamation Or MsgBoxStyle.YesNo, Version.ProgramName) = MsgBoxResult.Yes Then
 
                 Dim str_str As New List(Of String)
 
