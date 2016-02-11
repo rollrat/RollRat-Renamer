@@ -945,6 +945,11 @@ Public Class frmMain
     End Function
 
     Private Sub bSubtitle_Click(sender As Object, e As EventArgs) Handles bSubtitle.Click
+        If Not My.Computer.FileSystem.DirectoryExists(tbMovieAddr.Text) Or
+           Not My.Computer.FileSystem.DirectoryExists(tbSubtitleAddr.Text) Then
+            ShowMsgCritical("올바른 폴더를 선택해 주세요.")
+            Exit Sub
+        End If
         Dim filesMovie = My.Computer.FileSystem.GetFiles(tbMovieAddr.Text, FileIO.SearchOption.SearchTopLevelOnly, "*.*").ToArray
         Dim filesSubtitle = My.Computer.FileSystem.GetFiles(tbSubtitleAddr.Text, FileIO.SearchOption.SearchTopLevelOnly, "*.*").ToArray
 
@@ -986,7 +991,7 @@ Public Class frmMain
                 Dim splitsMovieA As List(Of String) = SplitPattern(filenameMovie(i))
                 For j As Integer = 0 To splitsMovie.Count - 1
                     If splitsMovieA(j) <> splitsMovie(j) Then
-                            movieDiff(j) += 1
+                        movieDiff(j) += 1
                     End If
                 Next
             Next
@@ -1087,7 +1092,7 @@ Public Class frmMain
                 Next
             End If
 
-            If MsgBox("다음 원래(왼쪽)이름들이 오른쪽과 같이 바뀌는 것에 동의하십니까?" & vbCrLf & vbCrLf & message_bottom, _
+            If MsgBox("다음 원래(왼쪽)이름들이 오른쪽과 같이 바뀌는 것에 동의하십니까?" & vbCrLf & vbCrLf & message_bottom,
                       MsgBoxStyle.Exclamation Or MsgBoxStyle.YesNo, "RollRat Rename") = MsgBoxResult.Yes Then
 
                 Dim str_str As New List(Of String)
@@ -1111,7 +1116,7 @@ Public Class frmMain
                     End If
                     Exit Sub
                 End Try
-                
+
                 ShowMsgInform("요청하신 작업이 완료되었습니다.")
                 Listing_File(tbSubtitleAddr.Text)
                 WriteLog("   - addr=" & tbSubtitleAddr.Text)
