@@ -624,9 +624,9 @@ Partial Class frmMain
         Me.Label2.AutoSize = True
         Me.Label2.Location = New System.Drawing.Point(19, 33)
         Me.Label2.Name = "Label2"
-        Me.Label2.Size = New System.Drawing.Size(262, 15)
+        Me.Label2.Size = New System.Drawing.Size(295, 15)
         Me.Label2.TabIndex = 1
-        Me.Label2.Text = "Copyright (C) 2015. rollrat. All Rights Reserved."
+        Me.Label2.Text = "Copyright (C) 2015-2016. rollrat. All Rights Reserved."
         '
         'lbName
         '

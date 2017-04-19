@@ -1,6 +1,6 @@
 ﻿'/*************************************************************************
 '
-'   Copyright (C) 2015. rollrat. All Rights Reserved.
+'   Copyright (C) 2015-2016. rollrat. All Rights Reserved.
 '
 '   Author: HyunJun Jeong
 '

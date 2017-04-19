@@ -1,6 +1,6 @@
 ﻿'/*************************************************************************
 '
-'   Copyright (C) 2015. rollrat. All Rights Reserved.
+'   Copyright (C) 2015-2016. rollrat. All Rights Reserved.
 '
 '   Author: HyunJun Jeong
 '
@@ -247,6 +247,23 @@ Module Parse
         Return True
     End Function
 
+    Private Function c_inside_overlap_part(ByRef left As c_status, ByRef right As c_status) As Boolean
+        c_skip_whitespace()
+        If Not c_process_inside(left) Then
+            c_show_error("Not found.") : Return False
+        End If
+        c_skip_whitespace()
+        If Not c_match(",") Then
+            c_show_error("Not found ',' symbol.") : Return False
+        End If
+        c_skip_whitespace()
+        If Not c_process_inside(right) Then
+            c_show_error("Not found.") : Return False
+        End If
+        c_skip_whitespace()
+        Return True
+    End Function
+
     Private Function c_inside_section(ByRef section As c_section) As Boolean
         If global_line_text.Length <= global_line_ptr Then
             Return False
@@ -468,10 +485,37 @@ Module Parse
         Return skip_string
     End Function
 
+    Private Sub c_internal_process_command_overlap(ByVal status As c_status, ByRef position As Integer, ByVal skip_string As String)
+        If status.IsInt = False Then
+            If status.IsNone = False Then
+                If status.cvalue = "^" Then
+                    position = 0
+                ElseIf status.cvalue = "$" Then
+                    position = skip_string.Length - 1
+                Else
+                    position = 0
+                    Do
+                        position += 1
+                    Loop Until skip_string(position) = status.cvalue
+                End If
+            Else
+                position = 0
+            End If
+        Else
+            position = status.ivalue - 1
+        End If
+    End Sub
+
     Private Function c_parse_function_pattern_internal(ByVal line As String, ByVal skip_string As String) As String
         Dim return_string As String = ""
 
         Dim s_type As Boolean = False
+
+        Dim left_left As c_status
+        Dim left_right As c_status
+
+        Dim right_left As c_status
+        Dim right_right As c_status
 
         Dim section As c_section
 
@@ -485,7 +529,28 @@ Module Parse
 
         For i As Integer = 0 To line.Length - 1
             global_line_ptr = i
-            If c_match("<"c) Then
+            If c_match("["c) Then
+                s_type = False
+                If Not c_inside_overlap_part(left_left, left_right) Then Return skip_string
+                If c_match("<"c) Then
+                    If c_match("-"c) Then
+                        If c_match(">"c) Then
+                            s_target = 3
+                        Else
+                            s_target = 2
+                        End If
+                    End If
+                ElseIf c_match("-"c) Then
+                    If c_match(">"c) Then
+                        s_target = 1
+                    Else
+                        s_target = 4
+                    End If
+                End If
+                If Not c_inside_overlap_part(right_left, right_right) Then Return skip_string
+                If Not c_match("]"c) Then c_show_error("Not found closure.") : Return skip_string
+                Exit For
+            ElseIf c_match("<"c) Then
                 s_type = True
                 If Not c_inside_section(section) Then Return skip_string
                 If Not c_match(">"c) Then c_show_error("Not found closure.") : Return skip_string
@@ -546,6 +611,191 @@ Module Parse
                 WriteLog("       -- lvalue=" & section.lvalue & ";rvalue=" & section.rvalue & ";skip=" & skip_string, True)
                 Return skip_string
             End Try
+        Else
+            Dim lsave As String = ""
+            Dim lstart_pos, lend_pos As Integer
+            Dim rsave As String = ""
+            Dim rstart_pos, rend_pos As Integer
+
+            c_internal_process_command_overlap(left_left, lstart_pos, skip_string)
+            c_internal_process_command_overlap(left_right, lend_pos, skip_string)
+
+            If lstart_pos < lend_pos Then
+                If lend_pos >= skip_string.Length Then
+                    c_show_error("Not found scope number too long.")
+                    WriteLog("       -- lend_pos=" & lend_pos & ";skip=" & skip_string.Length, True)
+                    Return skip_string
+                End If
+                For i = lstart_pos To lend_pos
+                    lsave += skip_string(i)
+                Next
+            ElseIf lstart_pos = lend_pos Then
+                If lend_pos >= skip_string.Length Then
+                    c_show_error("Not found scope number too long.")
+                    WriteLog("       -- lend_pos=" & lend_pos & ";skip=" & skip_string.Length, True)
+                    Return skip_string
+                End If
+                lsave += skip_string(lstart_pos)
+            ElseIf lend_pos < lstart_pos Then
+                If lstart_pos >= skip_string.Length Then
+                    c_show_error("Not found scope number too long.")
+                    WriteLog("       -- lstart_pos=" & lstart_pos & ";skip=" & skip_string.Length, True)
+                    Return skip_string
+                End If
+                For i = lend_pos To lstart_pos
+                    lsave += skip_string(lstart_pos - i)
+                Next
+            End If
+
+            c_internal_process_command_overlap(right_left, rstart_pos, skip_string)
+            c_internal_process_command_overlap(right_right, rend_pos, skip_string)
+
+            If rstart_pos < rend_pos Then
+                If rend_pos >= skip_string.Length Then
+                    c_show_error("Not found scope number too long.")
+                    WriteLog("       -- rend_pos=" & rend_pos & ";skip=" & skip_string.Length, True)
+                    Return skip_string
+                End If
+                For i = rstart_pos To rend_pos
+                    rsave += skip_string(i)
+                Next
+            ElseIf rstart_pos = rend_pos Then
+                If rend_pos >= skip_string.Length Then
+                    c_show_error("Not found scope number too long.")
+                    WriteLog("       -- rend_pos=" & rend_pos & ";skip=" & skip_string.Length, True)
+                    Return skip_string
+                End If
+                rsave += skip_string(rstart_pos)
+            ElseIf rend_pos < rstart_pos Then
+                If rstart_pos >= skip_string.Length Then
+                    c_show_error("Not found scope number too long.")
+                    WriteLog("       -- rstart_pos=" & rstart_pos & ";skip=" & skip_string.Length, True)
+                    Return skip_string
+                End If
+                For i = rend_pos To rstart_pos
+                    rsave += skip_string(rstart_pos - i)
+                Next
+            End If
+
+            If s_target = 1 Then
+                If rstart_pos < rend_pos Then
+                    For i = 0 To rstart_pos - 1
+                        return_string += skip_string(i)
+                    Next
+                    For i = rstart_pos To rend_pos
+                        return_string += lsave(i - rstart_pos)
+                    Next
+                    If rend_pos + 1 <> skip_string.Length - 1 Then
+                        For i = rend_pos + 1 To skip_string.Length - 1
+                            return_string += skip_string(i)
+                        Next
+                    End If
+                ElseIf rstart_pos = rend_pos Then
+                    For i = 0 To rstart_pos - 1
+                        return_string += skip_string(i)
+                    Next
+                    return_string += lsave(0)
+                    If rend_pos + 1 <> skip_string.Length - 1 Then
+                        For i = rend_pos + 1 To skip_string.Length - 1
+                            return_string += skip_string(i)
+                        Next
+                    End If
+                ElseIf rstart_pos > rend_pos Then
+                    For i = 0 To rend_pos - 1
+                        return_string += skip_string(i)
+                    Next
+                    For i = 0 To rstart_pos - rend_pos
+                        return_string += lsave(rstart_pos - rend_pos - i)
+                    Next
+                    If rstart_pos + 1 <> skip_string.Length - 1 Then
+                        For i = rstart_pos + 1 To skip_string.Length - 1
+                            return_string += skip_string(i)
+                        Next
+                    End If
+                End If
+            ElseIf s_target = 2 Then
+                If lstart_pos < lend_pos Then
+                    For i = 0 To lstart_pos - 1
+                        return_string += skip_string(i)
+                    Next
+                    For i = lstart_pos To lend_pos
+                        return_string += rsave(i - lstart_pos)
+                    Next
+                    If lend_pos + 1 <> skip_string.Length - 1 Then
+                        For i = lend_pos + 1 To skip_string.Length - 1
+                            return_string += skip_string(i)
+                        Next
+                    End If
+                ElseIf lstart_pos = lend_pos Then
+                    For i = 0 To lstart_pos - 1
+                        return_string += skip_string(i)
+                    Next
+                    return_string += rsave(0)
+                    If lend_pos + 1 <> skip_string.Length - 1 Then
+                        For i = lend_pos + 1 To skip_string.Length - 1
+                            return_string += skip_string(i)
+                        Next
+                    End If
+                ElseIf lstart_pos > lend_pos Then
+                    For i = 0 To lend_pos - 1
+                        return_string += skip_string(i)
+                    Next
+                    For i = lend_pos To lstart_pos
+                        return_string += rsave(lstart_pos - lend_pos - i)
+                    Next
+                    If lstart_pos + 1 <> skip_string.Length - 1 Then
+                        For i = lstart_pos + 1 To skip_string.Length - 1
+                            return_string += skip_string(i)
+                        Next
+                    End If
+                End If
+            ElseIf s_target = 3 Then
+                Dim max_s1, min_s2 As Integer
+                If lstart_pos <= lend_pos Then max_s1 = lend_pos Else max_s1 = lstart_pos
+                If rstart_pos <= rend_pos Then min_s2 = rstart_pos Else min_s2 = rend_pos
+                If max_s1 < min_s2 AndAlso Math.Abs(lstart_pos - lend_pos) = Math.Abs(rstart_pos - rend_pos) Then
+                    If lstart_pos > lend_pos Then c_swap_int(lstart_pos, lend_pos)
+                    For i = 0 To lstart_pos - 1
+                        return_string += skip_string(i)
+                    Next
+                    For i = lstart_pos To lend_pos
+                        return_string += rsave(i - lstart_pos)
+                    Next
+                    If rstart_pos < rend_pos Then
+                        For i = lend_pos + 1 To rstart_pos - 1
+                            return_string += skip_string(i)
+                        Next
+                        For i = rstart_pos To rend_pos
+                            return_string += lsave(i - rstart_pos)
+                        Next
+                    ElseIf rstart_pos = rend_pos Then
+                        return_string += lsave(0)
+                    Else
+                        For i = lend_pos + 1 To rend_pos - 1
+                            return_string += skip_string(i)
+                        Next
+                        For i = rend_pos To rstart_pos
+                            return_string += lsave(rstart_pos - rend_pos - i)
+                        Next
+                    End If
+                Else
+                    c_show_error("Not found scope type. It's incorrect scope syntax.")
+                    Return skip_string
+                End If
+            ElseIf s_target = 4 Then
+                If lstart_pos > lend_pos Then c_swap_int(lstart_pos, lend_pos)
+                If rstart_pos > rend_pos Then c_swap_int(rstart_pos, rend_pos)
+                If lstart_pos <= rstart_pos Then
+                    If rend_pos <= lend_pos Then
+                        For i = lstart_pos To rstart_pos - 1
+                            return_string += skip_string(i)
+                        Next
+                        For i = rend_pos + 1 To lend_pos
+                            return_string += skip_string(i)
+                        Next
+                    End If
+                End If
+            End If
         End If
 
         Return return_string
